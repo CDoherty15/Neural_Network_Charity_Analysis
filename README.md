@@ -38,6 +38,7 @@ _APPLICATION_TYPE_
 - We can see by the plot that the dip between 0 - 10,000 is very steep, so it is hard to get a good estimate on where we should set the cutoff point. If we look at the unique value counts, the highest has over 27,000 and the next few are all lower than 2,000. If we meet in the middle of the plot and chose 5,000, we would bin all of the application types except for one. This is why it is good to do both. Looking at the counts, there is a big difference from "T10" to "T9", 528 to 156. So we will set our cutoff point at 500. We have 17 unique application types, after setting our cutoff point to 500, we are now left with 9 unique application types, 8 of the original and the 9th is the binned type.
 
 _CLASSIFICATION_
+
 ![CLASS_unique_valuecount](https://user-images.githubusercontent.com/79118630/126692962-e5bd05d4-7a20-4d3b-a1b1-f9836819a5e7.png)![CLASS_density](https://user-images.githubusercontent.com/79118630/126692976-83fe8f16-e779-400f-9345-591f9e22c093.png)
 
 - We conduct the same process with `CLASSIFICATION`. This one is a bit more challenging since there are 71 unique values in this column. On the density plot, the drop is very short but is also very steep. We look at the value counts and there is another substantial differences between the counts. Not only that, but it seems that a lot of the unique values are only in the dataset once. So here, we can play it safe and make the cutoff point 1800. We started with 71 unique values, and now are left with 6, 5 of the original and 1 'other' bin.
@@ -48,5 +49,47 @@ _CLASSIFICATION_
 ![application_df_cols](https://user-images.githubusercontent.com/79118630/126694838-af3584e1-dce0-4aa0-8aef-344d88b2d992.png)
 
 ### Compiling, Training, and Evaluating the Model
+
+***Compiling and Training***
+- For our model, we used 2 hidden layers, the first hidden layer has 80 nodes and the second has 30 nodes. For both layers, we used a 'relu' activation as this seemed the best fit for our data. We then added an output layer that is 1 unit and is a 'sigmoid' activation. Here we have our neural network summary with the shape of each layer and the number of parameters. 
+
+![origin_nn_summ](https://user-images.githubusercontent.com/79118630/126696156-ddd40f77-33a0-44b9-97a0-7dddfa5de8d4.png)
+- Next we compile the model so that the loss is measured by 'binary_crossentropy' and we are measuring the model my an accuracy metric. We then fit and train the model with the training sets and run it for 100 epochs. 
+
+***Evaluating the model***
+Here are the results for the model:
+
+![origin_nn_results](https://user-images.githubusercontent.com/79118630/126696775-aa1e8471-e95c-4187-932e-64356cee7d85.png)
+- We ended our results with a 0.5561 loss and an accuracy of 72.56%. This is accuracy is not bad but it is not very good either. Loss metric is the score of the performance of the model through each iteration and epoch by evaluating the inaccuracy of a single input. Our accuracy is low, but the bigger problem is the high loss. This loss means that there is a 55.6% inaccuracy for each single input. This is just a factoid to keep in the back of our heads because we are mainly focused on the accuracy. 
+- For this project, we want our accuracy to be 75% or greater. We will give ourselves three attempts to change our neural network model in trying to reach 75% accuracy. 
+
+#### Optimizing 
+- For this optimization process, we will follow the first preprocessing steps. For our first attempt, we will change the binning size for `APPLICATION_TYPE` and `CLASSIFICATION`
+
+***First Optimization***
+- Originally, we had set the `APPLICATION_TYPE` cutoff to 500 and `CLASSIFICATION` to 1800. This time `APPLICATION_TYPE` will have a cutoff of 100 and `CLASSIFICATION` will have a cutoff at 600. Changing the bin size allows for more of the original values to be encoded, allowing for more accuracy because less values will be the raw values and not binned in 'other'. These changes don't seem large since only one or two of the original unique values are used again, but the 'other' bins are much lower:
+
+![APP_TYPE_valuecount_OPT1](https://user-images.githubusercontent.com/79118630/126698452-4d2b09ed-b134-41fe-82ef-fd763584b09c.png) ![CLASS_valuecount_OPT1](https://user-images.githubusercontent.com/79118630/126698461-9e2e82f3-d3cc-45ee-a696-0a027e8064b0.png)
+- We follow the same encoding steps, merge the columns that didn't need to be encoded, and now have a total of 46 columns. 1 target column and 45 feature columns. Adding features doesn't always increase accuracy, but we technically didn't add features, we just put more of the original data back in the dataset.
+- We then split the data like before in training and testing, and we will use the same hidden layers, nodes and activation functions as we did with the original model.
+
+![OPT1_nn_summ](https://user-images.githubusercontent.com/79118630/126699367-dc82afb7-23b9-4c8d-98e7-0cc42f307da3.png)
+![OPT1_nn_results](https://user-images.githubusercontent.com/79118630/126699537-58589595-038a-41e8-a483-bfee2be5f79f.png)
+
+- Even though we didn't change anything to the model, we get an increased amount of parameters because we added 2 feature columns. Our results are pretty much the same, but slightly better with a loss of 0.5522 and an accuracy of 72.7%. We failed in trying to increase our accuracy to 75% and our increases were microscopic
+
+***Second Optimization***
+- For our second attempt, we will add another hidden layer with 10 nodes. Adding another layer should improve our model because it is another cycle of processing the data will have to go through. We will also keep our new bins because that has shown to better our model. 
+
+![OPT2_nn_summ](https://user-images.githubusercontent.com/79118630/126700051-e876346c-4f47-4b0c-9499-6499338317b6.png)
+![OPT2_nn_results](https://user-images.githubusercontent.com/79118630/126700070-b8b708c0-a62d-4c7b-9088-2bfca1ce9f7e.png)
+- The parameters for the first two layers stay the same cause we did not touch those, but we increase the total amount of paramters because we added another hidden layer. However, adding the hidden layer did the opposite of what we wanted. We got a loss of 0.5545 and an accuracy of 72.45%. We have one last attempt to reach our 75% accuracy goal. 
+
+***Third Optimization***
+- For our final attempt, we will keep everything the same from the first two optimization attempts and this time instead of running epochs, we will run 200. Epochs are how many times the data is ran through the model and increasing that count usually helps because that is increasing the training. We will keep our third hidden layer because even though our loss and accuracy did worse compared to first optimization attempt, the loss did better than the original model and the accuracy was only marginally worse (.11%). So running more epochs through could potentially worsen our accuracy, but it could increase it. 
+
+![OPT3_nn_summ](https://user-images.githubusercontent.com/79118630/126700887-13aa1962-75e6-4057-bd48-810b448bdc52.png)
+![OPT3_nn_results](https://user-images.githubusercontent.com/79118630/126700895-667ece58-2940-4097-99b9-f94e1797ee11.png)
+- Our summary table will stay the same cause we didn't change any of the layers. Our results however showed little change. The loss was 0.5562 and the accuracy was 72.63%. Compared to the second attempt, our accuracy actually increased but our loss decreased, but these changes again are so microscopic that if we are too make more attempts, we will need bigger changes. 
 
 ## Summary
